@@ -90,27 +90,28 @@ function simplifySVG(item) {
     item.children.forEach(function (child) {
       simplifySVG(child);
     });
-    return; // ✅ Important: Stop here after handling the group
+    return;
   }
 
   if (item instanceof paper.Path) {
-    // Convert Paper.js segments into x/y points
     var points = item.segments.map(seg => ({
       x: seg.point.x,
       y: seg.point.y
     }));
 
-    // ✅ Use simplify-js if needed
+    console.log('Original points:', points.length);
+
     if (mode === "simplify" || mode === "both") {
-      points = simplify(points, tolerance, true); // better quality
+      // 🔥 Try starting with a higher tolerance (like 20 or 50) to test
+      points = simplify(points, tolerance, true);
+      console.log('Simplified points:', points.length);
     }
 
-    // ✅ Convert points back to Paper.js Points
     var segments = points.map(p => new paper.Point(p.x, p.y));
 
-    if (!segments || segments.length < 3) return; // Skip tiny paths
+    if (!segments || segments.length < 3) return;
 
-    // ✅ Smoothing (round sharp angles)
+    // Smoothing (only if selected)
     if (mode === "smooth" || mode === "both") {
       var newPath = new paper.Path({
         strokeColor: item.strokeColor || 'black',
@@ -127,7 +128,7 @@ function simplifySVG(item) {
         var v2 = next.subtract(curr).normalize();
         var angle = Math.acos(v1.dot(v2));
 
-        if (angle < Math.PI * 0.75) { // Sharp corner
+        if (angle < Math.PI * 0.75) {
           var offset = Math.min(radius, curr.getDistance(prev) / 2, curr.getDistance(next) / 2);
           var cornerStart = curr.subtract(v1.multiply(offset));
           var cornerEnd = curr.add(v2.multiply(offset));
@@ -140,11 +141,19 @@ function simplifySVG(item) {
 
       if (item.closed) newPath.closePath();
       item.replaceWith(newPath);
+    } else {
+      // If no smooth, just rebuild path with simplified points
+      var newPath = new paper.Path({
+        strokeColor: item.strokeColor || 'black',
+        strokeWidth: item.strokeWidth || 1,
+        closed: item.closed
+      });
+      segments.forEach(pt => newPath.add(pt));
+      if (item.closed) newPath.closePath();
+      item.replaceWith(newPath);
     }
   }
 }
-
-
 
 function drawSVG(originalItem, simplifiedItem) {
   originalProject.activate();
