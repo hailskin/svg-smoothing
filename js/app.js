@@ -15,10 +15,6 @@ var downloadBtn = document.getElementById("downloadBtn");
 var originalSVG;
 var filename = null;
 
-catmullFactorInput.addEventListener("input", function () {
-  document.getElementById("radiusValue").textContent = catmullFactorInput.value;
-});
-
 fileInput.addEventListener("change", function (event) {
   var files = event.target.files;
   for (var i = 0; i < files.length; i++) {
@@ -50,19 +46,25 @@ fileInput.addEventListener("change", function (event) {
 });
 
 function setCanvasSize(svgWidth, svgHeight) {
-  var maxWidth = window.innerWidth / 2;
-  var scaleFactor = Math.min(maxWidth / svgWidth, 1);
+  // Calculate the maximum width for both canvases to fit side by side
+  var maxWidth = window.innerWidth / 2; // Half the window width
+
+  // Determine the scale factor to fit the SVG within the maxWidth
+  var scaleFactor = Math.min(maxWidth / svgWidth, 1); // Ensure that we don't scale up the SVG (hence the '1')
   var canvasWidth = svgWidth * scaleFactor;
   var canvasHeight = svgHeight * scaleFactor;
 
+  // Apply the dimensions to both canvases
   originalCanvas.width = canvasWidth;
   originalCanvas.height = canvasHeight;
   simplifiedCanvas.width = canvasWidth;
   simplifiedCanvas.height = canvasHeight;
 
+  // Set the view size to the original SVG dimensions to prevent Paper.js from scaling it
   originalProject.view.viewSize = new paper.Size(svgWidth, svgHeight);
   simplifiedProject.view.viewSize = new paper.Size(svgWidth, svgHeight);
 
+  // Scale the canvas CSS size to fit the screen
   originalCanvas.style.width = canvasWidth + "px";
   originalCanvas.style.height = canvasHeight + "px";
   simplifiedCanvas.style.width = canvasWidth + "px";
@@ -84,73 +86,18 @@ function simplifyAndDraw(item) {
 function simplifySVG(item) {
   var tolerance = parseFloat(toleranceInput.value);
   var mode = modeSelect.value;
-  var radius = parseFloat(catmullFactorInput.value);
+  var factor = parseFloat(catmullFactorInput.value);
 
   if (item instanceof paper.Group) {
     item.children.forEach(function (child) {
       simplifySVG(child);
     });
-    return;
-  }
-
-  if (item instanceof paper.Path) {
-    var points = item.segments.map(seg => ({
-      x: seg.point.x,
-      y: seg.point.y
-    }));
-
-    console.log('Original points:', points.length);
-
+  } else if (item instanceof paper.Path) {
     if (mode === "simplify" || mode === "both") {
-      // 🔥 Try starting with a higher tolerance (like 20 or 50) to test
-      points = simplify(points, tolerance, true);
-      console.log('Simplified points:', points.length);
+      item.simplify(tolerance);
     }
-
-    var segments = points.map(p => new paper.Point(p.x, p.y));
-
-    if (!segments || segments.length < 3) return;
-
-    // Smoothing (only if selected)
     if (mode === "smooth" || mode === "both") {
-      var newPath = new paper.Path({
-        strokeColor: item.strokeColor || 'black',
-        strokeWidth: item.strokeWidth || 1,
-        closed: item.closed
-      });
-
-      for (var i = 0; i < segments.length; i++) {
-        var prev = segments[(i - 1 + segments.length) % segments.length];
-        var curr = segments[i];
-        var next = segments[(i + 1) % segments.length];
-
-        var v1 = curr.subtract(prev).normalize();
-        var v2 = next.subtract(curr).normalize();
-        var angle = Math.acos(v1.dot(v2));
-
-        if (angle < Math.PI * 0.75) {
-          var offset = Math.min(radius, curr.getDistance(prev) / 2, curr.getDistance(next) / 2);
-          var cornerStart = curr.subtract(v1.multiply(offset));
-          var cornerEnd = curr.add(v2.multiply(offset));
-          newPath.lineTo(cornerStart);
-          newPath.quadraticCurveTo(curr, cornerEnd);
-        } else {
-          newPath.lineTo(curr);
-        }
-      }
-
-      if (item.closed) newPath.closePath();
-      item.replaceWith(newPath);
-    } else {
-      // If no smooth, just rebuild path with simplified points
-      var newPath = new paper.Path({
-        strokeColor: item.strokeColor || 'black',
-        strokeWidth: item.strokeWidth || 1,
-        closed: item.closed
-      });
-      segments.forEach(pt => newPath.add(pt));
-      if (item.closed) newPath.closePath();
-      item.replaceWith(newPath);
+      item.smooth({ type: 'catmull-rom', factor: factor });
     }
   }
 }
@@ -166,23 +113,35 @@ function drawSVG(originalItem, simplifiedItem) {
 }
 
 downloadBtn.addEventListener("click", function () {
+  // Activate the simplified project
   simplifiedProject.activate();
+
+  // Export the simplified SVG as a data URL
   var svgData = simplifiedProject.exportSVG({ asString: true });
-  var blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+  var blob = new Blob([svgData], {
+    type: "image/svg+xml;charset=utf-8",
+  });
   var url = URL.createObjectURL(blob);
+
+  // Create a temporary anchor element and trigger a download
   var downloadLink = document.createElement("a");
   downloadLink.href = url;
 
   if (filename) {
-    const seperator = filename.includes(" ") ? " " : filename.includes("_") ? "_" : "-";
+    const seperator = filename.includes(" ")
+      ? " "
+      : filename.includes("_")
+      ? "_"
+      : "-";
     const name = filename.endsWith(".svg") ? filename.slice(0, -4) : filename;
     downloadLink.download = `${name}${seperator}smooth.svg`;
   } else {
     downloadLink.download = `smooth.svg`;
   }
-
   document.body.appendChild(downloadLink);
   downloadLink.click();
+
+  // Clean up: remove the temporary link and revoke the object URL
   document.body.removeChild(downloadLink);
   URL.revokeObjectURL(url);
 
