@@ -97,8 +97,14 @@ function simplifySVG(item) {
       item.simplify(tolerance);
     }
     if (mode === "smooth" || mode === "both") {
-      item.smooth({ type: 'geometric', factor: factor });
-    }
+  var radius = parseFloat(catmullFactorInput.value) * 20; // Adjust scale if needed
+  var pathData = item.exportSVG({ asString: false }).getAttribute('d');
+  var roundedD = roundCorners(pathData, radius);
+  var roundedPath = new paper.Path();
+  roundedPath.importSVG('<path d="' + roundedD + '"/>');
+  item.replaceWith(roundedPath);
+}
+
   }
 }
 
