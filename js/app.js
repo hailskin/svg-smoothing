@@ -50,25 +50,19 @@ fileInput.addEventListener("change", function (event) {
 });
 
 function setCanvasSize(svgWidth, svgHeight) {
-  // Calculate the maximum width for both canvases to fit side by side
-  var maxWidth = window.innerWidth / 2; // Half the window width
-
-  // Determine the scale factor to fit the SVG within the maxWidth
-  var scaleFactor = Math.min(maxWidth / svgWidth, 1); // Ensure that we don't scale up the SVG (hence the '1')
+  var maxWidth = window.innerWidth / 2;
+  var scaleFactor = Math.min(maxWidth / svgWidth, 1);
   var canvasWidth = svgWidth * scaleFactor;
   var canvasHeight = svgHeight * scaleFactor;
 
-  // Apply the dimensions to both canvases
   originalCanvas.width = canvasWidth;
   originalCanvas.height = canvasHeight;
   simplifiedCanvas.width = canvasWidth;
   simplifiedCanvas.height = canvasHeight;
 
-  // Set the view size to the original SVG dimensions to prevent Paper.js from scaling it
   originalProject.view.viewSize = new paper.Size(svgWidth, svgHeight);
   simplifiedProject.view.viewSize = new paper.Size(svgWidth, svgHeight);
 
-  // Scale the canvas CSS size to fit the screen
   originalCanvas.style.width = canvasWidth + "px";
   originalCanvas.style.height = canvasHeight + "px";
   simplifiedCanvas.style.width = canvasWidth + "px";
@@ -97,7 +91,6 @@ function simplifySVG(item) {
       simplifySVG(child);
     });
   } else if (item instanceof paper.Path) {
-    // Simplify if needed
     if (mode === "simplify" || mode === "both") {
       item.simplify(tolerance);
     }
@@ -108,6 +101,7 @@ function simplifySVG(item) {
     if (mode === "smooth" || mode === "both") {
       var newPath = new paper.Path({
         strokeColor: item.strokeColor || 'black',
+        strokeWidth: item.strokeWidth || 1,
         closed: item.closed
       });
 
@@ -118,10 +112,9 @@ function simplifySVG(item) {
 
         var v1 = curr.subtract(prev).normalize();
         var v2 = next.subtract(curr).normalize();
-
         var angle = Math.acos(v1.dot(v2));
-        
-        if (angle < Math.PI * 0.75) { // if sharp angle
+
+        if (angle < Math.PI * 0.75) { // If sharp angle
           var offset = Math.min(radius, curr.getDistance(prev) / 2, curr.getDistance(next) / 2);
           var cornerStart = curr.subtract(v1.multiply(offset));
           var cornerEnd = curr.add(v2.multiply(offset));
@@ -132,16 +125,11 @@ function simplifySVG(item) {
         }
       }
 
-      if (item.closed) {
-        newPath.closePath();
-      }
-
+      if (item.closed) newPath.closePath();
       item.replaceWith(newPath);
     }
   }
 }
-
-
 
 function drawSVG(originalItem, simplifiedItem) {
   originalProject.activate();
@@ -154,35 +142,23 @@ function drawSVG(originalItem, simplifiedItem) {
 }
 
 downloadBtn.addEventListener("click", function () {
-  // Activate the simplified project
   simplifiedProject.activate();
-
-  // Export the simplified SVG as a data URL
   var svgData = simplifiedProject.exportSVG({ asString: true });
-  var blob = new Blob([svgData], {
-    type: "image/svg+xml;charset=utf-8",
-  });
+  var blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
   var url = URL.createObjectURL(blob);
-
-  // Create a temporary anchor element and trigger a download
   var downloadLink = document.createElement("a");
   downloadLink.href = url;
 
   if (filename) {
-    const seperator = filename.includes(" ")
-      ? " "
-      : filename.includes("_")
-      ? "_"
-      : "-";
+    const seperator = filename.includes(" ") ? " " : filename.includes("_") ? "_" : "-";
     const name = filename.endsWith(".svg") ? filename.slice(0, -4) : filename;
     downloadLink.download = `${name}${seperator}smooth.svg`;
   } else {
     downloadLink.download = `smooth.svg`;
   }
+
   document.body.appendChild(downloadLink);
   downloadLink.click();
-
-  // Clean up: remove the temporary link and revoke the object URL
   document.body.removeChild(downloadLink);
   URL.revokeObjectURL(url);
 
