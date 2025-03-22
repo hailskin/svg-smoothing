@@ -24,21 +24,17 @@
 <label for="file">Upload SVG</label>
 <input type="file" id="file" accept=".svg,image/svg+xml,image/svg">
 
-<label for="tolerance">Simplify Tolerance:</label>
 <input type="number" id="tolerance" min="0" step="1" value="2.5">
-<small>Lower = keeps more detail, higher = more simplified</small>
 
-<label for="mode">Mode:</label>
+<label for="mode">Mode</label>
 <select id="mode">
   <option value="simplify">Simplify</option>
-  <option value="smooth">Radius Only</option>
+  <option value="smooth">Smooth (Catmull-Rom)</option>
   <option value="both">Both</option>
 </select>
 
-<label for="catmullFactor">Corner Radius: <span id="radiusValue">10</span></label>
-<input type="range" id="catmullFactor" min="0" max="50" step="1" value="10">
-<small>Slide to make corners rounder</small>
-
+<label for="catmullFactor">Catmull-Rom Factor (0.0 - 1.0)</label>
+<input type="range" id="catmullFactor" min="0" max="1" step="0.1" value="0.5">
 
 
     
@@ -64,10 +60,8 @@
       </p>
     </footer>
 
-    <script src="https://unpkg.com/simplify-js@1.2.4/simplify.js"></script>
     <script type="text/javascript" src="js/paper-0.12.15-full.js"></script>
     <script type="text/javascript" src="js/app.js"></script>
-
 
     <!-- 100% privacy-first analytics -->
     <script src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
