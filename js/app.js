@@ -77,6 +77,12 @@ toleranceInput.addEventListener("input", function () {
   }
 });
 
+document.getElementById("cornerRadius").addEventListener("input", function () {
+  if (originalSVG) {
+    simplifyAndDraw(originalSVG.clone());
+  }
+});
+
 function simplifyAndDraw(item) {
     var simplifiedItem = item.clone();
     simplifySVG(simplifiedItem);
