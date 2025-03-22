@@ -90,41 +90,50 @@ function simplifyAndDraw(item) {
 function simplifySVG(item) {
   var tolerance = parseFloat(toleranceInput.value);
   var mode = modeSelect.value;
-  var factor = parseFloat(catmullFactorInput.value);
+  var radius = parseFloat(catmullFactorInput.value);
 
   if (item instanceof paper.Group) {
     item.children.forEach(function (child) {
       simplifySVG(child);
     });
   } else if (item instanceof paper.Path) {
+    // Simplify if needed
+    if (mode === "simplify" || mode === "both") {
+      item.simplify(tolerance);
+    }
+
+    var segments = item.segments;
+    if (!segments || segments.length < 3) return; // Not enough points to smooth
+
+    // Now smooth if needed
     if (mode === "smooth" || mode === "both") {
-  var radius = parseFloat(catmullFactorInput.value); // Direct from slider
-  var newPath = new paper.Path({
-    strokeColor: 'black',
-    closed: item.closed
-  });
+      var newPath = new paper.Path({
+        strokeColor: item.strokeColor || 'black',
+        closed: item.closed
+      });
 
-var segments = item.segments;
-if (!segments || segments.length < 3) return; // STOP if not enough points
+      newPath.add(segments[0].point); // Start the path
 
-  newPath.add(segments[0].point); // Start path
+      for (var i = 1; i < segments.length - 1; i++) {
+        var prev = segments[i - 1].point;
+        var current = segments[i].point;
+        var next = segments[i + 1].point;
 
-for (var i = 1; i < segments.length - 1; i++) {
-    var next = segments[i + 1].point;
-    newPath.arcTo(next, radius);
-}
+        // ✅ Proper arcTo: go through 'current' to 'next'
+        newPath.arcTo(current, next, radius);
+      }
 
-  // Finish the path with the last segment
-  newPath.lineTo(segments[segments.length - 1].point);
-  if (item.closed) {
-    newPath.closePath();
+      // Finish the path
+      newPath.lineTo(segments[segments.length - 1].point);
+      if (item.closed) {
+        newPath.closePath();
+      }
+
+      item.replaceWith(newPath);
+    }
   }
-
-  item.replaceWith(newPath);
 }
 
-  }
-}
 
 function drawSVG(originalItem, simplifiedItem) {
   originalProject.activate();
