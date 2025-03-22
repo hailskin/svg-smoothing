@@ -90,7 +90,7 @@ function simplifyAndDraw(item) {
 function simplifySVG(item) {
   var tolerance = parseFloat(toleranceInput.value);
   var mode = modeSelect.value;
-  var radius = parseFloat(catmullFactorInput.value) * 10;
+  var radius = parseFloat(catmullFactorInput.value);
 
   if (item instanceof paper.Group) {
     item.children.forEach(function (child) {
@@ -103,28 +103,35 @@ function simplifySVG(item) {
     }
 
     var segments = item.segments;
-    if (!segments || segments.length < 3) return; // Not enough points to smooth
+    if (!segments || segments.length < 3) return;
 
-    // Now smooth if needed
     if (mode === "smooth" || mode === "both") {
       var newPath = new paper.Path({
         strokeColor: item.strokeColor || 'black',
         closed: item.closed
       });
 
-      newPath.add(segments[0].point); // Start the path
+      for (var i = 0; i < segments.length; i++) {
+        var prev = segments[(i - 1 + segments.length) % segments.length].point;
+        var curr = segments[i].point;
+        var next = segments[(i + 1) % segments.length].point;
 
-      for (var i = 1; i < segments.length - 1; i++) {
-        var prev = segments[i - 1].point;
-        var current = segments[i].point;
-        var next = segments[i + 1].point;
+        var v1 = curr.subtract(prev).normalize();
+        var v2 = next.subtract(curr).normalize();
 
-        // ✅ Proper arcTo: go through 'current' to 'next'
-        newPath.arcTo(current, next, radius);
+        var angle = Math.acos(v1.dot(v2));
+        
+        if (angle < Math.PI * 0.75) { // if sharp angle
+          var offset = Math.min(radius, curr.getDistance(prev) / 2, curr.getDistance(next) / 2);
+          var cornerStart = curr.subtract(v1.multiply(offset));
+          var cornerEnd = curr.add(v2.multiply(offset));
+          newPath.lineTo(cornerStart);
+          newPath.quadraticCurveTo(curr, cornerEnd);
+        } else {
+          newPath.lineTo(curr);
+        }
       }
 
-      // Finish the path
-      newPath.lineTo(segments[segments.length - 1].point);
       if (item.closed) {
         newPath.closePath();
       }
@@ -133,6 +140,7 @@ function simplifySVG(item) {
     }
   }
 }
+
 
 
 function drawSVG(originalItem, simplifiedItem) {
