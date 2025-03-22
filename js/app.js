@@ -15,6 +15,10 @@ var downloadBtn = document.getElementById("downloadBtn");
 var originalSVG;
 var filename = null;
 
+catmullFactorInput.addEventListener("input", function () {
+  document.getElementById("radiusValue").textContent = catmullFactorInput.value;
+});
+
 fileInput.addEventListener("change", function (event) {
   var files = event.target.files;
   for (var i = 0; i < files.length; i++) {
