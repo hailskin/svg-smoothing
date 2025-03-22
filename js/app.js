@@ -97,7 +97,7 @@ function simplifySVG(item) {
       item.simplify(tolerance);
     }
     if (mode === "smooth" || mode === "both") {
-      item.smooth({ type: 'catmull-rom', factor: factor });
+      item.smooth({ type: 'geometric', factor: factor });
     }
   }
 }
