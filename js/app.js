@@ -91,11 +91,15 @@ function simplifySVG(item) {
       simplifySVG(child);
     });
   } else if (item instanceof paper.Path) {
+    var segments = item.segments.map(seg => ({
+      x: seg.point.x,
+      y: seg.point.y
+    }));
+
     if (mode === "simplify" || mode === "both") {
-      item.simplify(tolerance);
+      segments = simplify(segments, tolerance, true); // Use Simplify.js
     }
 
-    var segments = item.segments;
     if (!segments || segments.length < 3) return;
 
     if (mode === "smooth" || mode === "both") {
@@ -106,22 +110,22 @@ function simplifySVG(item) {
       });
 
       for (var i = 0; i < segments.length; i++) {
-        var prev = segments[(i - 1 + segments.length) % segments.length].point;
-        var curr = segments[i].point;
-        var next = segments[(i + 1) % segments.length].point;
+        var prev = segments[(i - 1 + segments.length) % segments.length];
+        var curr = segments[i];
+        var next = segments[(i + 1) % segments.length];
 
-        var v1 = curr.subtract(prev).normalize();
-        var v2 = next.subtract(curr).normalize();
+        var v1 = new paper.Point(curr.x, curr.y).subtract(new paper.Point(prev.x, prev.y)).normalize();
+        var v2 = new paper.Point(next.x, next.y).subtract(new paper.Point(curr.x, curr.y)).normalize();
         var angle = Math.acos(v1.dot(v2));
 
         if (angle < Math.PI * 0.75) { // If sharp angle
-          var offset = Math.min(radius, curr.getDistance(prev) / 2, curr.getDistance(next) / 2);
-          var cornerStart = curr.subtract(v1.multiply(offset));
-          var cornerEnd = curr.add(v2.multiply(offset));
+          var offset = Math.min(radius, new paper.Point(curr.x, curr.y).getDistance(prev) / 2, new paper.Point(curr.x, curr.y).getDistance(next) / 2);
+          var cornerStart = new paper.Point(curr.x, curr.y).subtract(v1.multiply(offset));
+          var cornerEnd = new paper.Point(curr.x, curr.y).add(v2.multiply(offset));
           newPath.lineTo(cornerStart);
-          newPath.quadraticCurveTo(curr, cornerEnd);
+          newPath.quadraticCurveTo(new paper.Point(curr.x, curr.y), cornerEnd);
         } else {
-          newPath.lineTo(curr);
+          newPath.lineTo(new paper.Point(curr.x, curr.y));
         }
       }
 
