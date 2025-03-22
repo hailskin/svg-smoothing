@@ -104,8 +104,8 @@ function simplifySVG(item) {
     closed: item.closed
   });
 
-  var segments = item.segments;
-  if (segments.length < 3) return; // Not enough points to round anything
+var segments = item.segments;
+if (!segments || segments.length < 3) return; // STOP if not enough points
 
   newPath.add(segments[0].point); // Start path
 
