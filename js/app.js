@@ -90,7 +90,7 @@ function simplifyAndDraw(item) {
 function simplifySVG(item) {
   var tolerance = parseFloat(toleranceInput.value);
   var mode = modeSelect.value;
-  var radius = parseFloat(catmullFactorInput.value);
+  var radius = parseFloat(catmullFactorInput.value) * 10;
 
   if (item instanceof paper.Group) {
     item.children.forEach(function (child) {
