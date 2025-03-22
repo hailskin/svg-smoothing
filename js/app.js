@@ -93,16 +93,30 @@ function simplifySVG(item) {
       simplifySVG(child);
     });
   } else if (item instanceof paper.Path) {
-    if (mode === "simplify" || mode === "both") {
-      item.simplify(tolerance);
-    }
     if (mode === "smooth" || mode === "both") {
-  var radius = parseFloat(catmullFactorInput.value) * 20; // Adjust scale if needed
-  var pathData = item.exportSVG({ asString: false }).getAttribute('d');
-  var roundedD = roundCorners(pathData, radius);
-  var roundedPath = new paper.Path();
-  roundedPath.importSVG('<path d="' + roundedD + '"/>');
-  item.replaceWith(roundedPath);
+  var radius = parseFloat(catmullFactorInput.value); // Direct from slider
+  var newPath = new paper.Path({
+    strokeColor: 'black',
+    closed: item.closed
+  });
+
+  var segments = item.segments;
+  if (segments.length < 3) return; // Not enough points to round anything
+
+  newPath.add(segments[0].point); // Start path
+
+for (var i = 1; i < segments.length - 1; i++) {
+    var next = segments[i + 1].point;
+    newPath.arcTo(next, radius);
+}
+
+  // Finish the path with the last segment
+  newPath.lineTo(segments[segments.length - 1].point);
+  if (item.closed) {
+    newPath.closePath();
+  }
+
+  item.replaceWith(newPath);
 }
 
   }
