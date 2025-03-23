@@ -84,17 +84,21 @@ document.getElementById("cornerRadius").addEventListener("input", function () {
 });
 
 function simplifyAndDraw(item) {
-var simplifiedItem = item.clone();
-simplifySVG(simplifiedItem);
+    var clonedItem = item.clone();
 
-var cornerRadius = parseFloat(document.getElementById("cornerRadius").value);
+    // ⭐ Get the corner radius value from the slider
+    var cornerRadius = parseFloat(document.getElementById("cornerRadius").value);
 
-if (cornerRadius > 0) {
-    simplifiedItem = roundCorners(simplifiedItem, cornerRadius);
-}
+    // ⭐ ROUND FIRST if needed
+    var roundedItem = clonedItem;
+    if (cornerRadius > 0) {
+        roundedItem = roundCorners(clonedItem, cornerRadius);
+    }
 
-drawSVG(item, simplifiedItem);
+    // ⭐ THEN SIMPLIFY the rounded version
+    simplifySVG(roundedItem);
 
+    drawSVG(item, roundedItem);
 }
 
 function simplifySVG(item) {
