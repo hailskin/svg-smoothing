@@ -77,29 +77,10 @@ toleranceInput.addEventListener("input", function () {
   }
 });
 
-document.getElementById("cornerRadius").addEventListener("input", function () {
-  document.getElementById("cornerValue").textContent = this.value; // Update the number showing
-  if (originalSVG) {
-    simplifyAndDraw(originalSVG.clone());
-  }
-});
-
 function simplifyAndDraw(item) {
-    var clonedItem = item.clone();
-
-    // ⭐ Get the corner radius value from the slider
-    var cornerRadius = parseFloat(document.getElementById("cornerRadius").value);
-
-    // ⭐ ROUND FIRST if needed
-    var roundedItem = clonedItem;
-    if (cornerRadius > 0) {
-        roundedItem = roundCorners(clonedItem, cornerRadius);
-    }
-
-    // ⭐ THEN SIMPLIFY the rounded version
-    simplifySVG(roundedItem);
-
-    drawSVG(item, roundedItem);
+  var simplifiedItem = item.clone();
+  simplifySVG(simplifiedItem);
+  drawSVG(item, simplifiedItem);
 }
 
 function simplifySVG(item) {
@@ -166,33 +147,3 @@ downloadBtn.addEventListener("click", function () {
 
   if (window.sa_event) sa_event("svg_download");
 });
-function roundCorners(path, radius) {
-    if (!path.segments.length) return path;
-
-    var newPath = new paper.Path();
-    newPath.strokeColor = path.strokeColor;
-    newPath.closed = path.closed;
-
-    var segments = path.segments;
-    for (var i = 0; i < segments.length; i++) {
-        var cur = segments[i].point;
-        var prev = segments[(i - 1 + segments.length) % segments.length].point;
-        var next = segments[(i + 1) % segments.length].point;
-
-        var fromPrev = cur.subtract(prev).normalize(radius);
-        var toNext = cur.subtract(next).normalize(radius);
-
-        newPath.add({
-            point: cur.subtract(fromPrev),
-            handleOut: fromPrev.divide(2)
-        });
-
-        newPath.add({
-            point: cur.subtract(toNext),
-            handleIn: toNext.divide(2)
-        });
-    }
-
-    newPath.simplify();
-    return newPath;
-}
