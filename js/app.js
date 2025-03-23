@@ -84,18 +84,17 @@ document.getElementById("cornerRadius").addEventListener("input", function () {
 });
 
 function simplifyAndDraw(item) {
-    var simplifiedItem = item.clone();
-    simplifySVG(simplifiedItem);
+var simplifiedItem = item.clone();
+simplifySVG(simplifiedItem);
 
-    // Get the corner radius value from the slider
-    var cornerRadius = parseFloat(document.getElementById("cornerRadius").value);
+var cornerRadius = parseFloat(document.getElementById("cornerRadius").value);
 
-    // Only round if the slider is above 0
-    if (cornerRadius > 0) {
-        simplifiedItem = roundCorners(simplifiedItem, cornerRadius);
-    }
+if (cornerRadius > 0) {
+    simplifiedItem = roundCorners(simplifiedItem, cornerRadius);
+}
 
-    drawSVG(item, simplifiedItem);
+drawSVG(item, simplifiedItem);
+
 }
 
 function simplifySVG(item) {
