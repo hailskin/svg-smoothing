@@ -78,6 +78,7 @@ toleranceInput.addEventListener("input", function () {
 });
 
 document.getElementById("cornerRadius").addEventListener("input", function () {
+  document.getElementById("cornerValue").textContent = this.value; // Update the number showing
   if (originalSVG) {
     simplifyAndDraw(originalSVG.clone());
   }
