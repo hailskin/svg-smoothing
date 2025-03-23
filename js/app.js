@@ -9,8 +9,6 @@ var simplifiedProject = new paper.Project(simplifiedCanvas);
 
 var fileInput = document.getElementById("file");
 var toleranceInput = document.getElementById("tolerance");
-var modeSelect = document.getElementById("mode");
-var catmullFactorInput = document.getElementById("catmullFactor");
 var downloadBtn = document.getElementById("downloadBtn");
 var originalSVG;
 var filename = null;
@@ -85,20 +83,12 @@ function simplifyAndDraw(item) {
 
 function simplifySVG(item) {
   var tolerance = parseFloat(toleranceInput.value);
-  var mode = modeSelect.value;
-  var factor = parseFloat(catmullFactorInput.value);
-
   if (item instanceof paper.Group) {
     item.children.forEach(function (child) {
       simplifySVG(child);
     });
   } else if (item instanceof paper.Path) {
-    if (mode === "simplify" || mode === "both") {
-      item.simplify(tolerance);
-    }
-    if (mode === "smooth" || mode === "both") {
-      item.smooth({ type: 'catmull-rom', factor: factor });
-    }
+    item.simplify(tolerance);
   }
 }
 
